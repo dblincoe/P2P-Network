@@ -8,13 +8,13 @@ run_remote_commands() {
 	fi
 
 	echo "Will run commands:"
-	echo "P2P Command: ${1}"
+	echo -e "P2P Command: ${1} \n"
 
 	for server in $SERVER_LIST
 	do
-		echo "Connecting to ${server}"
+		echo -e "\n Connecting to ${server}"
 		ssh $server "cd ./P2P-Network; ./p2p.sh ${1}" > /dev/null 2>&1
-		echo "Finished Running Commands on ${server}"
+		echo -e "Finished Running Commands on ${server} \n"
 	done
 }
 
