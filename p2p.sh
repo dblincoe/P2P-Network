@@ -13,8 +13,7 @@ run_remote_commands() {
 	for server in $SERVER_LIST
 	do
 		echo "Connecting to ${server}"
-		ssh $server "cd ./P2P-Network; git pull origin master"> out.log
-		#ssh $server "cd ./P2P-Network; ./p2p.sh ${1}"> out.log
+		ssh $server "cd ./P2P-Network; ./p2p.sh ${1}"> out.log
 		echo "Finished Running Commands on ${server}"
 	done
 }
@@ -24,5 +23,5 @@ then
 	run_remote_commands "local_pull"
 elif [ "$1" == "local_pull" ]
 then
-	git pull origin
+	git pull origin master
 fi
