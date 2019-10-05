@@ -13,7 +13,7 @@ run_remote_commands() {
 	for server in $SERVER_LIST
 	do
 		echo "Connecting to ${server}"
-		ssh $server "cd ./P2P-Network; ./p2p.sh ${1}"> out.log
+		ssh $server "cd ./P2P-Network; ./p2p.sh ${1}" > /dev/null 2>&1
 		echo "Finished Running Commands on ${server}"
 	done
 }
@@ -24,8 +24,10 @@ then
 elif [ "$1" == "local_pull" ]
 then
 	git pull origin master > out.log
-elif [ "$1" == "help" ]
+elif [ "$1" == "help" ] || [ -z "$1" ]
 then
+	echo -e '\n'
+	echo -e 'To see this help page again the help command can be used!'
 	echo -e '\n'
 
 	echo 'Remote Commands: '
