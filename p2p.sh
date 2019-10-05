@@ -23,5 +23,25 @@ then
 	run_remote_commands "local_pull"
 elif [ "$1" == "local_pull" ]
 then
-	git pull origin master
+	git pull origin master > out.log
+elif [ "$1" == "help" ]
+then
+	echo -e '\n'
+
+	echo 'Remote Commands: '
+	echo -e '\t remote_pull: pulls the latest code remotely'
+	echo -e '\t remote_compile: compiles code remotely'
+	echo ''
+	echo -e '\t remote_start: starts p2p network remotely'
+	echo -e '\t remote_stop: stops p2p network remotely'
+	echo -e '\n'
+
+	echo 'Local Commands: '
+	echo -e '\t local_pull: pulls the latest code on a local host'
+	echo -e '\t local_compile: compiles code on a local host'
+	echo ''
+	echo -e '\t local_start: starts p2p network locally'
+	echo -e '\t local_stop: stops p2p network locally'
+
+	echo -e '\n'
 fi
