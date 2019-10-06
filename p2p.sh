@@ -10,7 +10,7 @@ run_remote_commands() {
 	for server in $SERVER_LIST
 	do
 		echo -e "\nConnecting to ${server}"
-		ssh $server "cd ./P2P-Network; ./p2p.sh ${1}" > /dev/null 2>&1
+		ssh $server "cd ./p2p; ./p2p.sh ${1}" > /dev/null 2>&1
 		echo "Finished Running Commands on ${server}"
 	done
 }
