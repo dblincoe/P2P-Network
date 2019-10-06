@@ -22,9 +22,17 @@ if [ "$1" == "remote_pull" ]
 then
 	run_remote_commands "local_pull"
 
+elif [ "$1" == "remote_compile" ]
+then
+	run_remote_commands "local_compile"
+
 elif [ "$1" == "local_pull" ]
 then
 	git pull origin master > out.log
+
+elif [ "$1" == "local_compile" ]
+then
+	javac *.java > out.log
 
 elif [ "$1" == "help" ] || [ -z "$1" ]
 then
