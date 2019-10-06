@@ -32,7 +32,7 @@ then
 
 elif [ "$1" == "local_compile" ]
 then
-	javac *.java > out.log
+	javac -d ./ ./src/*.java
 
 elif [ "$1" == "help" ] || [ -z "$1" ]
 then
