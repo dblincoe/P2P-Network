@@ -3,3 +3,9 @@ output/*
 
 out.log
 *.class
+
+config_neighbors.txt
+config_sharing.txt
+shared/*
+obtained/*
+
