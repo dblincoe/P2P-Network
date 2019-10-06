@@ -27,7 +27,8 @@ then
 
 elif [ "$1" == "local_pull" ]
 then
-	git pull origin master > out.log
+	git fetch --all
+        git reset --hard origin/master
 
 elif [ "$1" == "local_compile" ]
 then
