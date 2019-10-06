@@ -22,18 +22,16 @@ then
 
 elif [ "$1" == "remote_compile" ]
 then
-	echo "Compiling code remotely"
+	echo "Compiling code..."
 	run_remote_commands "local_compile"
 
 elif [ "$1" == "local_pull" ]
 then
 	git pull origin master > out.log
-	echo "Pulled local git repo"
 
 elif [ "$1" == "local_compile" ]
 then
 	javac *.java > out.log
-	echo "Compiled code locally"
 
 elif [ "$1" == "help" ] || [ -z "$1" ]
 then
