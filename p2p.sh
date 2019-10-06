@@ -7,9 +7,6 @@ run_remote_commands() {
 		return
 	fi
 
-	echo "Will run commands:"
-	echo -e "P2P Command: ${1} \n"
-
 	for server in $SERVER_LIST
 	do
 		echo -e "\nConnecting to ${server}"
@@ -20,19 +17,23 @@ run_remote_commands() {
 
 if [ "$1" == "remote_pull" ]
 then
+	echo "Pulling git repo..."
 	run_remote_commands "local_pull"
 
 elif [ "$1" == "remote_compile" ]
 then
+	echo "Compiling code remotely"
 	run_remote_commands "local_compile"
 
 elif [ "$1" == "local_pull" ]
 then
 	git pull origin master > out.log
+	echo "Pulled local git repo"
 
 elif [ "$1" == "local_compile" ]
 then
 	javac *.java > out.log
+	echo "Compiled code locally"
 
 elif [ "$1" == "help" ] || [ -z "$1" ]
 then
