@@ -1,5 +1,6 @@
 output/*
 .idea/*
+*.iml
 
 out.log
 *.class
