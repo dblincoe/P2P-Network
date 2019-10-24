@@ -15,7 +15,7 @@ public class p2p
         }
 
         String hostName = InetAddress.getLocalHost().getHostName();
-        String ip = InetAddress.getByName(hostName).getAddress().toString();
+        InetAddress ip = InetAddress.getByName(hostName);
 
         Scanner portIn = new Scanner(new File("./config_peer.txt"));
         int connectionPort = portIn.nextInt();
@@ -23,9 +23,14 @@ public class p2p
 
         TransferManager transfer = new TransferManager(transferPort);
         ConnectionManager connection = new ConnectionManager(connectionPort);
-
+        connection.start();
+        System.out.println("Started");
+        
         Scanner commandsIn = new Scanner(System.in);
+        
+        System.out.println("Enter Command: ");
         String command = commandsIn.nextLine().toLowerCase();
+        System.out.println();
 
         while (!command.equals("exit")) {
             if (command.equals("connect")) {
@@ -35,10 +40,12 @@ public class p2p
             } else if (command.equals("leave")) {
                 connection.closeNeighborConnections();
             }
-
+    
+            System.out.println("Enter Command: ");
             command = commandsIn.nextLine().toLowerCase();
+            System.out.println();
         }
-        connection.closeNeighborConnections();
-
+        connection.exit();
+        connection.stop();
     }
 }
