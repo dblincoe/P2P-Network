@@ -6,7 +6,8 @@ then
 	for server in $SERVER_LIST
 	do
 		echo -e "\nConnecting to ${server}"
-		scp -r ./src/ $server:/home/drb133/p2p/src
+		ssh $server "cd ./p2p; rm -rf ./src" > /dev/null 2>&1
+		scp -r ./src/ $server:/home/drb133/p2p
 		echo "Finished copying sources to ${server}"
 	done
 

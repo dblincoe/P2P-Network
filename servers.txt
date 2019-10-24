@@ -1,6 +1,1 @@
-drb133@eecslab-10.case.edu
-drb133@eecslab-11.case.edu
-drb133@eecslab-12.case.edu
-drb133@eecslab-13.case.edu
-drb133@eecslab-14.case.edu
 drb133@eecslab-15.case.edu
