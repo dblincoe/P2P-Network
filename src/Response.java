@@ -17,7 +17,7 @@ public class Response extends ConnectionMessage {
 
     @Override
     public String toString() {
-        return "R:" + id + ";" + ip + ":" + port + ";" + filename;
+        return "R;" + id + ";" + ip + ":" + port + ";" + filename;
     }
 
 

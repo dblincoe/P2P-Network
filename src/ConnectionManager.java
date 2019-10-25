@@ -4,33 +4,28 @@ import java.util.*;
 
 public class ConnectionManager extends Thread {
     private ServerSocket connectionSocket;
-    private List<ConnectionThread> connections;
-    private List<ConnectionThread> neighbors;
-    
-    private boolean serverRunning;
-    
+    private HashMap<String, ConnectionThread> connections;
+
+    private HashMap<Integer, ConnectionMessage> messages;
+
+    private boolean running = true;
+
     public ConnectionManager(int port) throws IOException {
         connectionSocket = new ServerSocket(port);
-        connections = new ArrayList<>();
-        neighbors = new ArrayList<>();
+        connections = new HashMap<>();
+        messages = new HashMap<>();
     }
     
     @Override
     public void run()
     {
-        serverRunning = true;
         System.out.println("Connection Server Running");
-        
         try
         {
-            while (serverRunning)
+            while (running)
             {
                 Socket s = this.connectionSocket.accept();
-                System.out.println("New Connection Accepted");
-    
-                ConnectionThread ct = new ConnectionThread(s);
-                ct.start();
-                connections.add(ct);
+                addConnection(s);
             }
         }
         catch (IOException e)
@@ -46,35 +41,44 @@ public class ConnectionManager extends Thread {
         while (neighborsIn.hasNextLine()) {
             String neighbor = neighborsIn.nextLine();
             String hostName = neighbor.split(" ")[0];
-            Integer port = Integer.parseInt(neighbor.split(" ")[1]);
+            int port = Integer.parseInt(neighbor.split(" ")[1]);
     
             InetAddress ip = InetAddress.getByName(hostName);
-            System.out.println("Attempting to connecting to " + ip.toString() + ":" + port);
-            
             Socket s = new Socket(ip, port);
-            
-            
-            ConnectionThread ct = new ConnectionThread(s);
+
+            addConnection(s);
+        }
+    }
+
+    private boolean addConnection(Socket s) throws IOException {
+        ConnectionThread ct = new ConnectionThread(s, messages, connections);
+        if (connections.get(ct.getAddress()) != null) {
+            ct.close();
+            return false;
+        } else {
+            System.out.println("Connecting to " + ct.getAddress());
             ct.start();
-            neighbors.add(ct);
+            connections.put(ct.getAddress(), ct);
+            return true;
         }
     }
 
     public void closeNeighborConnections() throws IOException
     {
-        for (ConnectionThread ct : neighbors) {
+        for (ConnectionThread ct : connections.values()) {
             ct.close();
         }
-        neighbors.clear();
+        connections.clear();
     }
 
     public void exit() throws IOException
     {
         closeNeighborConnections();
         connectionSocket.close();
+        running = false;
     }
     
     public void get(String filename) {
-        Query q = new Query(filename);
+        Query q = new Query(filename, null);
     }
 }

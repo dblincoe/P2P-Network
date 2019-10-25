@@ -46,6 +46,5 @@ public class p2p
             System.out.println();
         }
         connection.exit();
-        connection.stop();
     }
 }

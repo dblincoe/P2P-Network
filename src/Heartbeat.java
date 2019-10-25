@@ -36,6 +36,6 @@ public class Heartbeat extends ConnectionMessage {
 
     @Override
     public String toString() {
-        return "H:" + id;
+        return "H;" + id;
     }
 }

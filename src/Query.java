@@ -5,15 +5,21 @@ public class Query extends ConnectionMessage {
 
     private int id;
     private String filename;
+    private String address;
 
-    public Query(String filename) {
+    public Query(String filename, String address) {
         id = Math.abs(new Random().nextInt());
         this.filename = filename;
+        this.address = address;
     }
 
     public Query(int id, String filename) {
         this.id = id;
         this.filename = filename;
+    }
+
+    public String getAddress() {
+        return address;
     }
 
     @Override
@@ -31,7 +37,7 @@ public class Query extends ConnectionMessage {
 
     @Override
     public String toString() {
-        return "Q:" + id + ";" + filename;
+        return "Q;" + id + ";" + filename;
     }
 
 }
