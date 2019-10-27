@@ -6,7 +6,7 @@ public class ConnectionManager extends Thread {
     private ServerSocket connectionSocket;
     private HashMap<String, ConnectionThread> connections;
 
-    private HashMap<Integer, ConnectionMessage> messages;
+    private HashMap<Integer, Query> messages;
 
     private boolean running = true;
 
@@ -24,8 +24,9 @@ public class ConnectionManager extends Thread {
         {
             while (running)
             {
-                Socket s = this.connectionSocket.accept();
-                addConnection(s);
+                ConnectionThread ct = new ConnectionThread(this.connectionSocket.accept(), messages, connections);
+                System.out.println("Accepting connection from: " + ct.getAddress());
+                addConnection(ct);
             }
         }
         catch (IOException e)
@@ -41,22 +42,26 @@ public class ConnectionManager extends Thread {
         while (neighborsIn.hasNextLine()) {
             String neighbor = neighborsIn.nextLine();
             String hostName = neighbor.split(" ")[0];
-            int port = Integer.parseInt(neighbor.split(" ")[1]);
-    
-            InetAddress ip = InetAddress.getByName(hostName);
-            Socket s = new Socket(ip, port);
 
-            addConnection(s);
+            int port = Integer.parseInt(neighbor.split(" ")[1]);
+            InetAddress ip = InetAddress.getByName(hostName);
+
+            ConnectionThread ct = new ConnectionThread(new Socket(ip, port), messages, connections);
+            System.out.println("Attempting to connect to: " + ct.getAddress());
+            addConnection(ct);
         }
     }
 
-    private boolean addConnection(Socket s) throws IOException {
-        ConnectionThread ct = new ConnectionThread(s, messages, connections);
+    private boolean addConnection(ConnectionThread ct) throws IOException {
         if (connections.get(ct.getAddress()) != null) {
             ct.close();
             return false;
+        } else if (!ct.isConnected()) {
+            System.out.println("Failed to connect to " + ct.getAddress());
+            ct.close();
+            return false;
         } else {
-            System.out.println("Connecting to " + ct.getAddress());
+            System.out.println("Successfully connected to " + ct.getAddress());
             ct.start();
             connections.put(ct.getAddress(), ct);
             return true;
@@ -79,6 +84,5 @@ public class ConnectionManager extends Thread {
     }
     
     public void get(String filename) {
-        Query q = new Query(filename, null);
     }
 }

@@ -9,8 +9,8 @@ public class Heartbeat extends ConnectionMessage {
         id = Math.abs(new Random().nextInt());
     }
 
-    public Heartbeat(int id) {
-        this.id = id;
+    public Heartbeat(String[] data) {
+        this.id = Integer.parseInt(data[1]);
     }
 
     public int getId() {
@@ -36,6 +36,6 @@ public class Heartbeat extends ConnectionMessage {
 
     @Override
     public String toString() {
-        return "H;" + id;
+        return "H;" + id + "\n";
     }
 }

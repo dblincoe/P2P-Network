@@ -7,19 +7,30 @@ public class Query extends ConnectionMessage {
     private String filename;
     private String address;
 
-    public Query(String filename, String address) {
+    public Query(String filename) {
         id = Math.abs(new Random().nextInt());
         this.filename = filename;
-        this.address = address;
     }
 
-    public Query(int id, String filename) {
-        this.id = id;
-        this.filename = filename;
+    public Query(String[] data) {
+        this.id = Integer.parseInt(data[1]);
+        this.filename = data[2];
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public String getAddress() {
         return address;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getFilename() {
+        return filename;
     }
 
     @Override
@@ -37,7 +48,7 @@ public class Query extends ConnectionMessage {
 
     @Override
     public String toString() {
-        return "Q;" + id + ";" + filename;
+        return "Q;" + id + ";" + filename + "\n";
     }
 
 }

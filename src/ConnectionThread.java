@@ -1,91 +1,138 @@
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class ConnectionThread extends Thread
-{
+public class ConnectionThread extends Thread {
     private Socket socket;
-    private HashMap<Integer, ConnectionMessage> messages;
+
+    private HashMap<Integer, Query> queries;
     private HashMap<String, ConnectionThread> connections;
 
-    private boolean running;
+    private Timer readingTimer;
+    private Timer heartbeatTimer;
 
+    private Heartbeat lastHeartbeat;
     private long lastHeartbeatTime;
-    private static final int TIMEOUT = 30000;
-    
-    public ConnectionThread(Socket socket, HashMap<Integer, ConnectionMessage> messages,
-                            HashMap<String, ConnectionThread>  connections) {
+    private static final int TIMEOUT = 45000;
+
+    public ConnectionThread(Socket socket, HashMap<Integer, Query> queries,
+                            HashMap<String, ConnectionThread> connections) {
         this.socket = socket;
-        this.messages = messages;
+
+        this.queries = queries;
         this.connections = connections;
 
-        this.running = false;
+        readingTimer = new Timer();
+        heartbeatTimer = new Timer();
     }
-    
+
     @Override
     public void run() {
         System.out.println("Connected to " + socket.getInetAddress().toString() + ":" + socket.getPort());
-        running = true;
 
         startHeartBeat();
-        try {
-            Scanner scanner = new Scanner(socket.getInputStream(), StandardCharsets.UTF_8.name());
-            while(running) {
-                new Timer().scheduleAtFixedRate(new TimerTask() {
-                    @Override
-                    public void run() {
-                        if (scanner.hasNext()) {
-                            parseMessage(scanner.nextLine().split(";"));
-                        }
+        readingTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    byte[] data = new byte[1024];
+                    int bytesRead = socket.getInputStream().read(data);
+                    while (bytesRead != -1) {
+                        parseBytes(data);
+                        bytesRead = socket.getInputStream().read(data);
                     }
-                },0, 10);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        }, 0, 10);
     }
 
-    private void parseMessage(String[] message) {
-        synchronized (messages) {
-            if (message[0].equals("H")) {
-                lastHeartbeatTime = System.currentTimeMillis() / 1000;
-            } else if (message[0].equals("Q")) {
-                // TODO: Check if I have this file
-            } else if (message[0].equals("R")) {
-                //TODO: Check if this needs to propagate back or get file
-            }
-        }
+    public boolean isConnected() {
+        return socket.isConnected();
     }
 
-    public void sendMessage(ConnectionMessage message) {
-        //TODO: Send Message
-    }
-    
-    public void close() throws IOException
-    {
-        running = false;
+    public void close() throws IOException {
+        connections.remove(getAddress());
+        readingTimer.cancel();
+        heartbeatTimer.cancel();
         socket.close();
+    }
+
+    private void parseBytes(byte[] data) throws IOException {
+        StringBuilder message = new StringBuilder();
+        for (byte chunk : data) {
+            if ((char) chunk != '\n') {
+                message.append((char) chunk);
+            } else {
+                String[] splitMessage = message.toString().split(";");
+                if (splitMessage[0].equals("H")) {
+                    Heartbeat h = new Heartbeat(splitMessage);
+                    System.out.println("Received Hearbeat " + h.getId() + " from " + getAddress());
+                    lastHeartbeatTime = System.currentTimeMillis();
+                } else if (splitMessage[0].equals("Q")) {
+                    Query q = new Query(splitMessage);
+                    System.out.println("Received Query " + q.getId() + " from " + getAddress());
+                    checkQuery(q);
+                } else if (splitMessage[0].equals("R")) {
+                    Response r = new Response(splitMessage);
+                    System.out.println("Received Response " + r.getId() + " from " + getAddress());
+                    checkResponse(r);
+                }
+                message = new StringBuilder();
+            }
+        }
+    }
+
+    private void checkQuery(Query q) throws IOException {
+        if (Books.getLocalBooks().contains(q.getFilename())) {
+            sendMessage(new Response(q.getId(), q.getFilename()));
+        } else {
+            q.setAddress(getAddress());
+            queries.put(q.getId(), q);
+            for (ConnectionThread connection : connections.values()) {
+                System.out.println(connection);
+            }
+        }
+    }
+
+    private void checkResponse(Response r) throws IOException {
+        if (queries.containsKey(r.getId())) {
+            String address = queries.get(r.getId()).getAddress();
+            queries.remove(r.getId());
+            if (address != null) {
+                connections.get(address).sendMessage(r);
+            } else {
+                TransferClient tc = new TransferClient(r);
+                tc.start();
+            }
+        }
+    }
+
+    private void sendMessage(ConnectionMessage message) throws IOException {
+        byte[] mBytes = message.toString().getBytes();
+        socket.getOutputStream().write(mBytes);
     }
 
     private void startHeartBeat() {
         lastHeartbeatTime = System.currentTimeMillis();
-        new Timer().scheduleAtFixedRate(new TimerTask() {
+        heartbeatTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (lastHeartbeatTime > (System.currentTimeMillis()) - TIMEOUT) {
-                    sendMessage(new Heartbeat());
-                    System.out.println("Sent Heartbeat");
-                } else {
-                    try {
+                try {
+                    if (lastHeartbeatTime > (System.currentTimeMillis()) - TIMEOUT) {
+                        lastHeartbeat = new Heartbeat();
+                        sendMessage(lastHeartbeat);
+                        System.out.println("Sent Heartbeat " + lastHeartbeat.getId() + " to " + getAddress());
+                    } else {
                         close();
                         System.out.println("Heartbeat not received");
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-        },0, TIMEOUT);
+        }, 0, 15000);
     }
 
     public String getAddress() {

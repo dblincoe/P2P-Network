@@ -1,5 +1,9 @@
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Scanner;
 
 public class Response extends ConnectionMessage {
 
@@ -8,16 +12,45 @@ public class Response extends ConnectionMessage {
     private int port;
     private String filename;
 
-    public Response(int id, String ip, int port, String filename) {
+    public Response(int id, String filename) throws IOException {
         this.id = id;
-        this.ip = ip;
-        this.port = port;
+
+        String hostName = InetAddress.getLocalHost().getHostName();
+        this.ip = InetAddress.getByName(hostName).getHostAddress();
+
+        Scanner portIn = new Scanner(new File("./config_peer.txt"));
+        portIn.nextInt();
+        this.port = portIn.nextInt();
+
         this.filename = filename;
+    }
+
+    public Response(String[] data) {
+        this.id = Integer.parseInt(data[1]);
+        this.ip = data[2];
+        this.port = Integer.parseInt(data[3]);
+        this.filename = data[4];
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getFilename() {
+        return filename;
     }
 
     @Override
     public String toString() {
-        return "R;" + id + ";" + ip + ":" + port + ";" + filename;
+        return "R;" + id + ";" + ip + ":" + port + ";" + filename + "\n";
     }
 
 

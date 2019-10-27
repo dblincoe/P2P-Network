@@ -22,13 +22,13 @@ public class p2p
         int transferPort = portIn.nextInt();
 
         TransferManager transfer = new TransferManager(transferPort);
+        transfer.start();
         ConnectionManager connection = new ConnectionManager(connectionPort);
         connection.start();
-        System.out.println("Started");
+        System.out.println("Transfer and Connection Sockets Opened");
         
         Scanner commandsIn = new Scanner(System.in);
-        
-        System.out.println("Enter Command: ");
+
         String command = commandsIn.nextLine().toLowerCase();
         System.out.println();
 
@@ -40,11 +40,11 @@ public class p2p
             } else if (command.equals("leave")) {
                 connection.closeNeighborConnections();
             }
-    
-            System.out.println("Enter Command: ");
+
             command = commandsIn.nextLine().toLowerCase();
             System.out.println();
         }
         connection.exit();
+        transfer.exit();
     }
 }
