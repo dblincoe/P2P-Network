@@ -83,6 +83,12 @@ public class ConnectionManager extends Thread {
         running = false;
     }
     
-    public void get(String filename) {
+    public void get(String filename) throws IOException {
+        Query q = new Query(filename);
+        messages.put(q.getId(), q);
+
+        for (ConnectionThread ct : connections.values()) {
+            ct.sendMessage(q);
+        }
     }
 }

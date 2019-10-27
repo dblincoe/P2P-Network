@@ -109,7 +109,7 @@ public class ConnectionThread extends Thread {
         }
     }
 
-    private void sendMessage(ConnectionMessage message) throws IOException {
+    public void sendMessage(ConnectionMessage message) throws IOException {
         byte[] mBytes = message.toString().getBytes();
         socket.getOutputStream().write(mBytes);
     }

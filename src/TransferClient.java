@@ -28,7 +28,7 @@ public class TransferClient extends Thread {
             byte[] mBytes = tPacket.toString().getBytes();
             socket.getOutputStream().write(mBytes);
 
-            FileOutputStream output = new FileOutputStream(fullFilePath, true);
+            final FileOutputStream output = new FileOutputStream(fullFilePath, true);
 
             transferTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
