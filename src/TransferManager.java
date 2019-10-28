@@ -8,7 +8,7 @@ public class TransferManager extends Thread {
 
     private HashMap<String, TransferServer> transfers;
 
-    public TransferManager(int port) throws IOException {
+    TransferManager(int port) throws IOException {
         transferSocket = new ServerSocket(port);
         transfers = new HashMap<>();
     }
@@ -23,18 +23,19 @@ public class TransferManager extends Thread {
                 ts.start();
                 transfers.put(ts.getAddress(), ts);
             }
-        } catch (IOException e) {}
+        } catch (IOException ignored) {
+        }
     }
 
 
-    public void closeTransferConnections() throws IOException {
+    private void closeTransferConnections() throws IOException {
         for (TransferServer ts : transfers.values()) {
             ts.close();
         }
         transfers.clear();
     }
 
-    public void exit() throws IOException {
+    void exit() throws IOException {
         closeTransferConnections();
         transferSocket.close();
         running = false;

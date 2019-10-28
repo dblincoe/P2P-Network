@@ -1,17 +1,17 @@
-import java.io.File;
-import java.io.FileNotFoundException;
+
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Scanner;
+import java.nio.charset.StandardCharsets;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class TransferServer extends Thread {
 
-    Socket socket;
-    Timer transferTimer;
+    private Socket socket;
+    private Timer transferTimer;
 
-    public TransferServer(Socket s) throws IOException {
+    TransferServer(Socket s) {
         socket = s;
         transferTimer = new Timer();
     }
@@ -28,7 +28,7 @@ public class TransferServer extends Thread {
                         parseBytes(data);
                         bytesRead = socket.getInputStream().read(data);
                     }
-                } catch (IOException e) {}
+                } catch (IOException ignored) {}
             }
         }, 0, 10);
     }
@@ -43,7 +43,7 @@ public class TransferServer extends Thread {
                 if (splitMessage[0].equals("T")) {
                     Transfer t = new Transfer(splitMessage);
                     System.out.println("Received File Transfer request for " + t.getFilename() + " from " + getAddress());
-                    sendFile(readInFile(t.getFilename()));
+                    sendFile(t.getFilename());
                 }
                 transferTimer.cancel();
                 transferTimer.purge();
@@ -52,32 +52,24 @@ public class TransferServer extends Thread {
         }
     }
 
-    private void sendFile(String fileData) throws IOException {
-        byte[] mBytes = fileData.getBytes();
-        socket.getOutputStream().write(mBytes);
-    }
-
-    private String readInFile(String filename) throws FileNotFoundException {
+    private void sendFile(String filename) throws IOException {
         String filePath = "./shared/" + filename;
-        Scanner fileIn = new Scanner(new File(filePath));
-        StringBuilder fileData = new StringBuilder();
+        FileReader fileIn = new FileReader(filePath);
 
-        System.out.println("Path " + filePath);
-        System.out.println("New " + new File(filePath).canRead());
-        while (fileIn.hasNextLine()) {
-            fileData.append(fileIn.nextLine());
+        char[] toSend = new char[1024];
+        while (fileIn.read(toSend) != -1) {
+            byte[] mBytes = new String(toSend).getBytes(StandardCharsets.US_ASCII);
+            socket.getOutputStream().write(mBytes);
         }
 
-        System.out.println(fileData.toString());
-
-        return fileData.toString();
+        System.out.println("Finished sending " + filename + " to " + getAddress());
     }
 
-    public String getAddress() {
+    String getAddress() {
         return socket.getInetAddress().getHostAddress();
     }
 
-    public void close() throws IOException {
+    void close() throws IOException {
         transferTimer.cancel();
         transferTimer.purge();
 

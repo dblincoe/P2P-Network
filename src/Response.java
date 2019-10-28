@@ -1,9 +1,7 @@
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Scanner;
 
 public class Response extends ConnectionMessage {
@@ -13,10 +11,8 @@ public class Response extends ConnectionMessage {
     private int port;
     private String filename;
 
-    public Response(int id, String filename) throws IOException {
+    Response(int id, String filename) throws IOException {
         this.id = id;
-
-        String hostName = InetAddress.getLocalHost().getHostName();
 
         Socket s = new Socket("www.google.com", 80);
         this.ip = s.getLocalAddress().getHostAddress();
@@ -29,26 +25,26 @@ public class Response extends ConnectionMessage {
         this.filename = filename;
     }
 
-    public Response(String[] data) {
+    Response(String[] data) {
         this.id = Integer.parseInt(data[1]);
         this.ip = data[2].split(":")[0];
         this.port = Integer.parseInt(data[2].split(":")[1]);
         this.filename = data[3];
     }
 
-    public int getId() {
+    int getId() {
         return id;
     }
 
-    public String getIp() {
+    String getIp() {
         return ip;
     }
 
-    public int getPort() {
+    int getPort() {
         return port;
     }
 
-    public String getFilename() {
+    String getFilename() {
         return filename;
     }
 

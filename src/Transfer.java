@@ -2,15 +2,15 @@ public class Transfer {
 
     private String filename;
 
-    public Transfer(String filename) {
+    Transfer(String filename) {
         this.filename = filename;
     }
 
-    public Transfer(String[] message) {
+    Transfer(String[] message) {
         filename = message[1];
     }
 
-    public String getFilename() {
+    String getFilename() {
         return filename;
     }
 

@@ -4,81 +4,83 @@ import java.util.*;
 
 public class ConnectionManager extends Thread {
     private ServerSocket connectionSocket;
-    private HashMap<String, ConnectionThread> connections;
+    private Map<String, ConnectionThread> syncConnections;
 
-    private HashMap<Integer, Query> messages;
+    private Map<Integer, Query> syncMessages;
 
     private boolean running = true;
 
-    public ConnectionManager(int port) throws IOException {
+    ConnectionManager(int port) throws IOException {
+        System.out.println("Connection Port " + port);
         connectionSocket = new ServerSocket(port);
-        connections = new HashMap<>();
-        messages = new HashMap<>();
+
+        HashMap<String, ConnectionThread> connections = new HashMap<>();
+        syncConnections = Collections.synchronizedMap(connections);
+
+        HashMap<Integer, Query> messages = new HashMap<>();
+        syncMessages = Collections.synchronizedMap(messages);
     }
     
     @Override
     public void run() {
         try {
             while (running) {
-                ConnectionThread ct = new ConnectionThread(this.connectionSocket.accept(), messages, connections);
+                ConnectionThread ct = new ConnectionThread(this.connectionSocket.accept(), syncMessages, syncConnections);
                 System.out.println("Accepting connection from: " + ct.getAddress());
                 addConnection(ct);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException ignored) {}
     }
     
-    public void createNeighborConnections() throws IOException {
+    void createNeighborConnections() throws IOException {
         Scanner neighborsIn = new Scanner(new File("./config_neighbors.txt"));
         
         while (neighborsIn.hasNextLine()) {
             String neighbor = neighborsIn.nextLine();
             String hostName = neighbor.split(" ")[0];
-
+            System.out.println("Hostname: "+ hostName);
             int port = Integer.parseInt(neighbor.split(" ")[1]);
+            System.out.println("Connecting on port " + port);
             InetAddress ip = InetAddress.getByName(hostName);
+            System.out.println("Connecting to ip " + ip.getHostAddress());
 
-            ConnectionThread ct = new ConnectionThread(new Socket(ip, port), messages, connections);
+            ConnectionThread ct = new ConnectionThread(new Socket(ip, port), syncMessages, syncConnections);
             System.out.println("Attempting to connect to: " + ct.getAddress());
             addConnection(ct);
         }
     }
 
-    private boolean addConnection(ConnectionThread ct) throws IOException {
-        if (connections.get(ct.getAddress()) != null) {
+    private void addConnection(ConnectionThread ct) throws IOException {
+        if (syncConnections.get(ct.getAddress()) != null) {
             ct.close();
-            return false;
         } else if (!ct.isConnected()) {
             System.out.println("Failed to connect to " + ct.getAddress());
             ct.close();
-            return false;
         } else {
             System.out.println("Successfully connected to " + ct.getAddress());
             ct.start();
-            connections.put(ct.getAddress(), ct);
-            return true;
+            syncConnections.put(ct.getAddress(), ct);
         }
     }
 
-    public void closeNeighborConnections() throws IOException {
-        for (ConnectionThread ct : connections.values()) {
+    void closeNeighborConnections() throws IOException {
+        for (ConnectionThread ct : syncConnections.values()) {
             ct.close();
         }
-        connections.clear();
+        syncConnections.clear();
     }
 
-    public void exit() throws IOException {
+    void exit() throws IOException {
         closeNeighborConnections();
         connectionSocket.close();
         running = false;
     }
     
-    public void get(String filename) throws IOException {
+    void get(String filename) throws IOException {
         Query q = new Query(filename);
-        messages.put(q.getId(), q);
+        syncMessages.put(q.getId(), q);
 
-        for (ConnectionThread ct : connections.values()) {
+        for (ConnectionThread ct : syncConnections.values()) {
             System.out.println("Query sent to: " + ct.getAddress());
             ct.sendMessage(q);
         }

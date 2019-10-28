@@ -1,19 +1,21 @@
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class TransferClient extends Thread {
 
-    Socket socket;
-    Transfer tPacket;
+    private Socket socket;
+    private Transfer tPacket;
 
-    String fullFilePath;
+    private String fullFilePath;
 
-    Timer transferTimer;
+    private Timer transferTimer;
 
-    public TransferClient(Response r) throws IOException {
+    TransferClient(Response r) throws IOException {
         socket = new Socket(r.getIp(), r.getPort());
         tPacket = new Transfer(r.getFilename());
 
@@ -40,19 +42,18 @@ public class TransferClient extends Thread {
                         int bytesRead = socket.getInputStream().read(data);
                         while (bytesRead != -1) {
                             lastByteTime[0] = System.currentTimeMillis();
-                            System.out.println(bytesRead);
-                            output.write(bytesRead);
+                            output.write(new String(data).getBytes(StandardCharsets.US_ASCII));
                             bytesRead = socket.getInputStream().read(data);
                         }
 
-                        if (lastByteTime[0] > System.currentTimeMillis() - 5000) {
+                        if (lastByteTime[0] > System.currentTimeMillis() - 500) {
                             System.out.println("Finished receiving " + tPacket.getFilename());
 
                             output.close();
                             transferTimer.cancel();
                             transferTimer.purge();
                         }
-                    } catch (IOException e) {}
+                    } catch (IOException ignored) {}
                 }
             }, 0, 10);
         } catch (IOException e) {

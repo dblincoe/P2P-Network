@@ -7,29 +7,29 @@ public class Query extends ConnectionMessage {
     private String filename;
     private String address;
 
-    public Query(String filename) {
+    Query(String filename) {
         id = Math.abs(new Random().nextInt());
         this.filename = filename;
     }
 
-    public Query(String[] data) {
+    Query(String[] data) {
         this.id = Integer.parseInt(data[1]);
         this.filename = data[2];
     }
 
-    public void setAddress(String address) {
+    void setAddress(String address) {
         this.address = address;
     }
 
-    public String getAddress() {
+    String getAddress() {
         return address;
     }
 
-    public int getId() {
+    int getId() {
         return id;
     }
 
-    public String getFilename() {
+    String getFilename() {
         return filename;
     }
 

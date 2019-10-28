@@ -5,15 +5,15 @@ public class Heartbeat extends ConnectionMessage {
 
     private int id;
 
-    public Heartbeat() {
+    Heartbeat() {
         id = Math.abs(new Random().nextInt());
     }
 
-    public Heartbeat(String[] data) {
+    Heartbeat(String[] data) {
         this.id = Integer.parseInt(data[1]);
     }
 
-    public int getId() {
+    int getId() {
         return id;
     }
 
