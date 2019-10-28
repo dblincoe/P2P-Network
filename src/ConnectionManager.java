@@ -17,26 +17,19 @@ public class ConnectionManager extends Thread {
     }
     
     @Override
-    public void run()
-    {
-        System.out.println("Connection Server Running");
-        try
-        {
-            while (running)
-            {
+    public void run() {
+        try {
+            while (running) {
                 ConnectionThread ct = new ConnectionThread(this.connectionSocket.accept(), messages, connections);
                 System.out.println("Accepting connection from: " + ct.getAddress());
                 addConnection(ct);
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
     
-    public void createNeighborConnections() throws IOException
-    {
+    public void createNeighborConnections() throws IOException {
         Scanner neighborsIn = new Scanner(new File("./config_neighbors.txt"));
         
         while (neighborsIn.hasNextLine()) {
@@ -68,16 +61,14 @@ public class ConnectionManager extends Thread {
         }
     }
 
-    public void closeNeighborConnections() throws IOException
-    {
+    public void closeNeighborConnections() throws IOException {
         for (ConnectionThread ct : connections.values()) {
             ct.close();
         }
         connections.clear();
     }
 
-    public void exit() throws IOException
-    {
+    public void exit() throws IOException {
         closeNeighborConnections();
         connectionSocket.close();
         running = false;
@@ -88,6 +79,7 @@ public class ConnectionManager extends Thread {
         messages.put(q.getId(), q);
 
         for (ConnectionThread ct : connections.values()) {
+            System.out.println("Query sent to: " + ct.getAddress());
             ct.sendMessage(q);
         }
     }

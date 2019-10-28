@@ -22,10 +22,12 @@ public class p2p
         int transferPort = portIn.nextInt();
 
         TransferManager transfer = new TransferManager(transferPort);
-        transfer.start();
         ConnectionManager connection = new ConnectionManager(connectionPort);
-        connection.start();
+
         System.out.println("Transfer and Connection Sockets Opened");
+
+        connection.start();
+        transfer.start();
         
         Scanner commandsIn = new Scanner(System.in);
 

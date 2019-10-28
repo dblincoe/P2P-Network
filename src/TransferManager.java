@@ -10,40 +10,31 @@ public class TransferManager extends Thread {
 
     public TransferManager(int port) throws IOException {
         transferSocket = new ServerSocket(port);
-
         transfers = new HashMap<>();
     }
 
     @Override
-    public void run()
-    {
+    public void run() {
         running = true;
-
-        try
-        {
-            while (running)
-            {
+        try {
+            while (running)  {
                 TransferServer ts = new TransferServer(this.transferSocket.accept());
+                System.out.println("Transfer connection accepted for " + ts.getAddress());
+                ts.start();
                 transfers.put(ts.getAddress(), ts);
             }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
+        } catch (IOException e) {}
     }
 
 
-    public void closeTransferConnections() throws IOException
-    {
+    public void closeTransferConnections() throws IOException {
         for (TransferServer ts : transfers.values()) {
             ts.close();
         }
         transfers.clear();
     }
 
-    public void exit() throws IOException
-    {
+    public void exit() throws IOException {
         closeTransferConnections();
         transferSocket.close();
         running = false;

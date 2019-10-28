@@ -16,6 +16,6 @@ public class Transfer {
 
     @Override
     public String toString() {
-        return "T;" + filename;
+        return "T;" + filename + "\n";
     }
 }

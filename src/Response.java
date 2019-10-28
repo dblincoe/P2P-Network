@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Scanner;
@@ -16,7 +17,10 @@ public class Response extends ConnectionMessage {
         this.id = id;
 
         String hostName = InetAddress.getLocalHost().getHostName();
-        this.ip = InetAddress.getByName(hostName).getHostAddress();
+
+        Socket s = new Socket("www.google.com", 80);
+        this.ip = s.getLocalAddress().getHostAddress();
+        s.close();
 
         Scanner portIn = new Scanner(new File("./config_peer.txt"));
         portIn.nextInt();
@@ -27,9 +31,9 @@ public class Response extends ConnectionMessage {
 
     public Response(String[] data) {
         this.id = Integer.parseInt(data[1]);
-        this.ip = data[2];
-        this.port = Integer.parseInt(data[3]);
-        this.filename = data[4];
+        this.ip = data[2].split(":")[0];
+        this.port = Integer.parseInt(data[2].split(":")[1]);
+        this.filename = data[3];
     }
 
     public int getId() {

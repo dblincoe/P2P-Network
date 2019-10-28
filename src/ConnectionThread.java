@@ -28,8 +28,6 @@ public class ConnectionThread extends Thread {
 
     @Override
     public void run() {
-        System.out.println("Connected to " + socket.getInetAddress().toString() + ":" + socket.getPort());
-
         startHeartBeat();
         readingTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -37,13 +35,11 @@ public class ConnectionThread extends Thread {
                 try {
                     byte[] data = new byte[1024];
                     int bytesRead = socket.getInputStream().read(data);
-                    while (bytesRead != -1) {
+                    while (bytesRead != -1 && socket.isConnected()) {
                         parseBytes(data);
                         bytesRead = socket.getInputStream().read(data);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                } catch (IOException e) {}
             }
         }, 0, 10);
     }
@@ -54,8 +50,13 @@ public class ConnectionThread extends Thread {
 
     public void close() throws IOException {
         connections.remove(getAddress());
+
         readingTimer.cancel();
+        readingTimer.purge();
+
         heartbeatTimer.cancel();
+        heartbeatTimer.purge();
+
         socket.close();
     }
 
@@ -72,11 +73,11 @@ public class ConnectionThread extends Thread {
                     lastHeartbeatTime = System.currentTimeMillis();
                 } else if (splitMessage[0].equals("Q")) {
                     Query q = new Query(splitMessage);
-                    System.out.println("Received Query " + q.getId() + " from " + getAddress());
+                    System.out.println("Received Query for " + q.getFilename() + " from " + getAddress());
                     checkQuery(q);
                 } else if (splitMessage[0].equals("R")) {
                     Response r = new Response(splitMessage);
-                    System.out.println("Received Response " + r.getId() + " from " + getAddress());
+                    System.out.println("Received Response for " + r.getFilename() + " from " + getAddress());
                     checkResponse(r);
                 }
                 message = new StringBuilder();
@@ -86,12 +87,17 @@ public class ConnectionThread extends Thread {
 
     private void checkQuery(Query q) throws IOException {
         if (Books.getLocalBooks().contains(q.getFilename())) {
+            System.out.println("File found! Sending response for " + q.getFilename());
             sendMessage(new Response(q.getId(), q.getFilename()));
         } else {
+            System.out.println("Host does not have requested file");
             q.setAddress(getAddress());
             queries.put(q.getId(), q);
             for (ConnectionThread connection : connections.values()) {
-                System.out.println(connection);
+                if (!connection.getAddress().equals(getAddress())) {
+                    System.out.println("Query sent to: " + connection.getAddress());
+                    System.out.println(connection);
+                }
             }
         }
     }
@@ -103,6 +109,7 @@ public class ConnectionThread extends Thread {
             if (address != null) {
                 connections.get(address).sendMessage(r);
             } else {
+                System.out.println("Response recieved for " + r.getFilename() + " at " + r.getIp() + ":" + r.getPort());
                 TransferClient tc = new TransferClient(r);
                 tc.start();
             }
@@ -120,17 +127,15 @@ public class ConnectionThread extends Thread {
             @Override
             public void run() {
                 try {
-                    if (lastHeartbeatTime > (System.currentTimeMillis()) - TIMEOUT) {
+                    if (lastHeartbeatTime > (System.currentTimeMillis()) - TIMEOUT && socket.isConnected()) {
                         lastHeartbeat = new Heartbeat();
-                        sendMessage(lastHeartbeat);
                         System.out.println("Sent Heartbeat " + lastHeartbeat.getId() + " to " + getAddress());
+                        sendMessage(lastHeartbeat);
                     } else {
+                        System.out.println("No heartbeat. Closing connection to " + getAddress());
                         close();
-                        System.out.println("Heartbeat not received");
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                } catch (IOException e) {}
             }
         }, 0, 15000);
     }

@@ -27,8 +27,10 @@ public class TransferClient extends Thread {
         try {
             byte[] mBytes = tPacket.toString().getBytes();
             socket.getOutputStream().write(mBytes);
+            System.out.println("Sent file transfer request for " + tPacket.getFilename());
 
             final FileOutputStream output = new FileOutputStream(fullFilePath, true);
+            final long[] lastByteTime = {System.currentTimeMillis()};
 
             transferTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
@@ -37,14 +39,20 @@ public class TransferClient extends Thread {
                         byte[] data = new byte[1024];
                         int bytesRead = socket.getInputStream().read(data);
                         while (bytesRead != -1) {
+                            lastByteTime[0] = System.currentTimeMillis();
+                            System.out.println(bytesRead);
                             output.write(bytesRead);
                             bytesRead = socket.getInputStream().read(data);
                         }
-                        output.close();
-                        transferTimer.cancel();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+
+                        if (lastByteTime[0] > System.currentTimeMillis() - 5000) {
+                            System.out.println("Finished receiving " + tPacket.getFilename());
+
+                            output.close();
+                            transferTimer.cancel();
+                            transferTimer.purge();
+                        }
+                    } catch (IOException e) {}
                 }
             }, 0, 10);
         } catch (IOException e) {

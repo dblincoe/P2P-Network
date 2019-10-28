@@ -24,13 +24,11 @@ public class TransferServer extends Thread {
                 try {
                     byte[] data = new byte[1024];
                     int bytesRead = socket.getInputStream().read(data);
-                    while (bytesRead != -1) {
+                    while (bytesRead != -1 && socket.isConnected()) {
                         parseBytes(data);
                         bytesRead = socket.getInputStream().read(data);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                } catch (IOException e) {}
             }
         }, 0, 10);
     }
@@ -44,9 +42,11 @@ public class TransferServer extends Thread {
                 String[] splitMessage = message.toString().split(";");
                 if (splitMessage[0].equals("T")) {
                     Transfer t = new Transfer(splitMessage);
+                    System.out.println("Received File Transfer request for " + t.getFilename() + " from " + getAddress());
                     sendFile(readInFile(t.getFilename()));
                 }
                 transferTimer.cancel();
+                transferTimer.purge();
                 break;
             }
         }
@@ -60,12 +60,17 @@ public class TransferServer extends Thread {
     private String readInFile(String filename) throws FileNotFoundException {
         String filePath = "./shared/" + filename;
         Scanner fileIn = new Scanner(new File(filePath));
-        String fileData = "";
+        StringBuilder fileData = new StringBuilder();
 
-        while (fileIn.hasNext()) {
-            fileData += fileIn.next();
+        System.out.println("Path " + filePath);
+        System.out.println("New " + new File(filePath).canRead());
+        while (fileIn.hasNextLine()) {
+            fileData.append(fileIn.nextLine());
         }
-        return fileData;
+
+        System.out.println(fileData.toString());
+
+        return fileData.toString();
     }
 
     public String getAddress() {
@@ -74,6 +79,8 @@ public class TransferServer extends Thread {
 
     public void close() throws IOException {
         transferTimer.cancel();
+        transferTimer.purge();
+
         socket.close();
     }
 }
