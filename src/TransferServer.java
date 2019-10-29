@@ -11,7 +11,7 @@ public class TransferServer extends Thread {
     private Socket socket;
     private Timer transferTimer;
 
-    TransferServer(Socket s) {
+    TransferServer(Socket s){
         socket = s;
         transferTimer = new Timer();
     }
@@ -35,19 +35,28 @@ public class TransferServer extends Thread {
 
     private void parseBytes(byte[] data) throws IOException {
         StringBuilder message = new StringBuilder();
+
         for (byte chunk : data) {
             if ((char) chunk != '\n') {
                 message.append((char) chunk);
             } else {
-                String[] splitMessage = message.toString().split(";");
-                if (splitMessage[0].equals("T")) {
-                    Transfer t = new Transfer(splitMessage);
-                    System.out.println("Received File Transfer request for " + t.getFilename() + " from " + getAddress());
-                    sendFile(t.getFilename());
+                String[] split = message.toString().split(":", 2);
+
+                if (split.length != 2) {
+                    return;
                 }
-                transferTimer.cancel();
-                transferTimer.purge();
-                break;
+
+                String type = split[0];
+                String[] dataFields = split[1].split(";");
+                if (type.equals("T")) {
+                    Transfer t = new Transfer(dataFields);
+                    System.out.println("Received File Transfer request for " + t.getFilename() + " from " + getAddress());
+
+                    sendFile(t.getFilename());
+
+                    close();
+                    return;
+                }
             }
         }
     }

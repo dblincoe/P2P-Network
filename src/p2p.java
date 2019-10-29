@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.util.Scanner;
 
 public class p2p
@@ -14,17 +15,20 @@ public class p2p
             }
         }
 
-        String hostName = InetAddress.getLocalHost().getHostName();
-        InetAddress ip = InetAddress.getByName(hostName);
-
         Scanner portIn = new Scanner(new File("./config_peer.txt"));
         int connectionPort = portIn.nextInt();
         int transferPort = portIn.nextInt();
+        int discoveryPort = portIn.nextInt();
 
+        Socket s = new Socket("www.google.com", 80);
+        System.out.println("IP Address " + s.getLocalAddress().getHostAddress());
+        s.close();
+
+        ConnectionManager connection = new ConnectionManager(connectionPort, discoveryPort);
         TransferManager transfer = new TransferManager(transferPort);
-        ConnectionManager connection = new ConnectionManager(connectionPort);
+        System.out.println("Discovery Port " + discoveryPort);
 
-        System.out.println("Transfer and Connection Sockets Opened");
+        System.out.println("Transfer, Connection, and Discovery Sockets Opened");
 
         connection.start();
         transfer.start();
@@ -35,18 +39,23 @@ public class p2p
         System.out.println();
 
         while (!command.equals("exit")) {
-            if (command.equals("connect")) {
-                connection.createNeighborConnections();
+            if (command.contains("connect")) {
+                connection.runDiscoveryProtocol(command.split(" ")[1], Integer.parseInt(command.split(" ")[2]));
             } else if (command.contains("get")) {
                 connection.get(command.split(" ")[1]);
             } else if (command.equals("leave")) {
+                System.out.println("Leaving Network");
                 connection.closeNeighborConnections();
+            } else {
+                System.out.println("Unknown Command");
             }
 
             command = commandsIn.nextLine().toLowerCase();
             System.out.println();
         }
+        System.out.println("Stopping Peer");
         connection.exit();
         transfer.exit();
+        System.exit(0);
     }
 }

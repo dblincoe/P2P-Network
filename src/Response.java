@@ -26,10 +26,10 @@ public class Response extends ConnectionMessage {
     }
 
     Response(String[] data) {
-        this.id = Integer.parseInt(data[1]);
-        this.ip = data[2].split(":")[0];
-        this.port = Integer.parseInt(data[2].split(":")[1]);
-        this.filename = data[3];
+        this.id = Integer.parseInt(data[0]);
+        this.ip = data[1].split(":")[0];
+        this.port = Integer.parseInt(data[1].split(":")[1]);
+        this.filename = data[2];
     }
 
     int getId() {
@@ -50,7 +50,7 @@ public class Response extends ConnectionMessage {
 
     @Override
     public String toString() {
-        return "R;" + id + ";" + ip + ":" + port + ";" + filename + "\n";
+        return "R:" + id + ";" + ip + ":" + port + ";" + filename + "\n";
     }
 
 

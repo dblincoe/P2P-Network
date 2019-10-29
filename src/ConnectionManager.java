@@ -4,18 +4,23 @@ import java.util.*;
 
 public class ConnectionManager extends Thread {
     private ServerSocket connectionSocket;
-    private Map<String, ConnectionThread> syncConnections;
+    private final Map<String, ConnectionThread> syncConnections;
+
+    private Discovery discoverySocket;
 
     private Map<Integer, Query> syncMessages;
 
     private boolean running = true;
 
-    ConnectionManager(int port) throws IOException {
+    ConnectionManager(int port, int discoveryPort) throws IOException {
         System.out.println("Connection Port " + port);
         connectionSocket = new ServerSocket(port);
 
         HashMap<String, ConnectionThread> connections = new HashMap<>();
         syncConnections = Collections.synchronizedMap(connections);
+
+        discoverySocket = new Discovery(discoveryPort);
+        discoverySocket.start();
 
         HashMap<Integer, Query> messages = new HashMap<>();
         syncMessages = Collections.synchronizedMap(messages);
@@ -26,52 +31,61 @@ public class ConnectionManager extends Thread {
         try {
             while (running) {
                 ConnectionThread ct = new ConnectionThread(this.connectionSocket.accept(), syncMessages, syncConnections);
-                System.out.println("Accepting connection from: " + ct.getAddress());
-                addConnection(ct);
+                addConnection(ct, "Accepting connection from: ");
             }
         } catch (IOException ignored) {}
     }
-    
-    void createNeighborConnections() throws IOException {
-        Scanner neighborsIn = new Scanner(new File("./config_neighbors.txt"));
-        
-        while (neighborsIn.hasNextLine()) {
-            String neighbor = neighborsIn.nextLine();
-            String hostName = neighbor.split(" ")[0];
-            System.out.println("Hostname: "+ hostName);
-            int port = Integer.parseInt(neighbor.split(" ")[1]);
-            System.out.println("Connecting on port " + port);
-            InetAddress ip = InetAddress.getByName(hostName);
-            System.out.println("Connecting to ip " + ip.getHostAddress());
 
-            ConnectionThread ct = new ConnectionThread(new Socket(ip, port), syncMessages, syncConnections);
-            System.out.println("Attempting to connect to: " + ct.getAddress());
-            addConnection(ct);
-        }
+    void runDiscoveryProtocol(String ip, int port) throws IOException {
+        discoverySocket.sendInitPing(this, ip, port);
     }
 
-    private void addConnection(ConnectionThread ct) throws IOException {
-        if (syncConnections.get(ct.getAddress()) != null) {
-            ct.close();
-        } else if (!ct.isConnected()) {
+    void createNeighbor(String hostIp, int port) throws IOException {
+        InetAddress ip = InetAddress.getByName(hostIp);
+
+        ConnectionThread ct = new ConnectionThread(new Socket(ip, port), syncMessages, syncConnections);
+        addConnection(ct, "Attempting to connect to: ");
+    }
+
+    private void addConnection(ConnectionThread ct, String connStr) throws IOException {
+        ConnectionThread prevConn = syncConnections.get(ct.getAddress());
+
+        if (prevConn == null || !prevConn.isConnected()) {
+            System.out.println(connStr + ct.getAddress());
+        } else {
+            prevConn.close();
+        }
+
+        if (!ct.isConnected()) {
             System.out.println("Failed to connect to " + ct.getAddress());
             ct.close();
         } else {
-            System.out.println("Successfully connected to " + ct.getAddress());
+            if (prevConn == null || !prevConn.isConnected()) {
+                System.out.println("Successfully connected to " + ct.getAddress());
+            }
+
             ct.start();
             syncConnections.put(ct.getAddress(), ct);
         }
     }
 
     void closeNeighborConnections() throws IOException {
-        for (ConnectionThread ct : syncConnections.values()) {
-            ct.close();
+        Collection<ConnectionThread> values = syncConnections.values();
+
+        synchronized (syncConnections) {
+            Iterator<ConnectionThread> it = values.iterator();
+
+            while (it.hasNext()) {
+                ConnectionThread connection = it.next();
+                connection.close();
+            }
         }
         syncConnections.clear();
     }
 
     void exit() throws IOException {
         closeNeighborConnections();
+        discoverySocket.close();
         connectionSocket.close();
         running = false;
     }

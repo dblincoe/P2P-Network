@@ -9,6 +9,7 @@ public class TransferManager extends Thread {
     private HashMap<String, TransferServer> transfers;
 
     TransferManager(int port) throws IOException {
+        System.out.println("Transfer Port " + port);
         transferSocket = new ServerSocket(port);
         transfers = new HashMap<>();
     }

@@ -18,7 +18,6 @@ public class ConnectionThread extends Thread {
     ConnectionThread(Socket socket, Map<Integer, Query> queries,
                      Map<String, ConnectionThread> connections) {
         this.socket = socket;
-
         this.queries = queries;
         this.connections = connections;
 
@@ -49,8 +48,6 @@ public class ConnectionThread extends Thread {
     }
 
     void close() throws IOException {
-        connections.remove(getAddress());
-
         readingTimer.cancel();
         readingTimer.purge();
 
@@ -66,20 +63,27 @@ public class ConnectionThread extends Thread {
             if ((char) chunk != '\n') {
                 message.append((char) chunk);
             } else {
-                String[] splitMessage = message.toString().split(";");
-                switch (splitMessage[0]) {
+                String[] split = message.toString().split(":", 2);
+
+                if (split.length != 2) {
+                    return;
+                }
+
+                String type = split[0];
+                String[] dataFields = split[1].split(";");
+                switch (type) {
                     case "H":
-                        Heartbeat h = new Heartbeat(splitMessage);
-                        System.out.println("Received Hearbeat " + h.getId() + " from " + getAddress());
+                        Heartbeat h = new Heartbeat(dataFields);
+                        System.out.println("Received Heartbeat " + h.getId() + " from " + getAddress());
                         lastHeartbeatTime = System.currentTimeMillis();
                         break;
                     case "Q":
-                        Query q = new Query(splitMessage);
+                        Query q = new Query(dataFields);
                         System.out.println("Received Query for " + q.getFilename() + " from " + getAddress());
                         checkQuery(q);
                         break;
                     case "R":
-                        Response r = new Response(splitMessage);
+                        Response r = new Response(dataFields);
                         System.out.println("Received Response for " + r.getFilename() + " from " + getAddress());
                         checkResponse(r);
                         break;
@@ -93,7 +97,7 @@ public class ConnectionThread extends Thread {
         if (Books.getLocalBooks().contains(q.getFilename())) {
             System.out.println("File found! Sending response for " + q.getFilename());
             sendMessage(new Response(q.getId(), q.getFilename()));
-        } else {
+        } else if (queries.get(q.getId()) == null) {
             System.out.println("Host does not have requested file");
             q.setAddress(getAddress());
             queries.put(q.getId(), q);
@@ -107,7 +111,7 @@ public class ConnectionThread extends Thread {
                     ConnectionThread connection = it.next();
                     if (!connection.getAddress().equals(getAddress())) {
                         System.out.println("Query sent to: " + connection.getAddress());
-                        System.out.println(connection);
+                        connection.sendMessage(q);
                     }
                 }
             }
@@ -121,7 +125,7 @@ public class ConnectionThread extends Thread {
             if (address != null) {
                 connections.get(address).sendMessage(r);
             } else {
-                System.out.println("Response recieved for " + r.getFilename() + " at " + r.getIp() + ":" + r.getPort());
+                System.out.println("Transfer Response for " + r.getFilename() + " at " + r.getIp() + ":" + r.getPort());
                 TransferClient tc = new TransferClient(r);
                 tc.start();
             }
@@ -149,12 +153,14 @@ public class ConnectionThread extends Thread {
                     }
                 } catch (IOException ignored) {}
             }
-        }, 0, 600000);
+        }, 0, 20000);
     }
 
     String getAddress() {
         return socket.getInetAddress().getHostAddress();
     }
+
+    int getPort() { return socket.getPort(); }
 
     @Override
     public boolean equals(Object o) {

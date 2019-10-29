@@ -7,7 +7,7 @@ public class Transfer {
     }
 
     Transfer(String[] message) {
-        filename = message[1];
+        filename = message[0];
     }
 
     String getFilename() {
@@ -16,6 +16,6 @@ public class Transfer {
 
     @Override
     public String toString() {
-        return "T;" + filename + "\n";
+        return "T:" + filename + "\n";
     }
 }

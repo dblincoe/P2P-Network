@@ -1,2 +1,2 @@
-class ConnectionMessage {
+public class ConnectionMessage {
 }

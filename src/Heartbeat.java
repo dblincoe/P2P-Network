@@ -10,15 +10,11 @@ public class Heartbeat extends ConnectionMessage {
     }
 
     Heartbeat(String[] data) {
-        this.id = Integer.parseInt(data[1]);
+        this.id = Integer.parseInt(data[0]);
     }
 
     int getId() {
         return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     @Override
@@ -36,6 +32,6 @@ public class Heartbeat extends ConnectionMessage {
 
     @Override
     public String toString() {
-        return "H;" + id + "\n";
+        return "H:" + id + "\n";
     }
 }

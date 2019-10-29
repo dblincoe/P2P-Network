@@ -13,8 +13,8 @@ public class Query extends ConnectionMessage {
     }
 
     Query(String[] data) {
-        this.id = Integer.parseInt(data[1]);
-        this.filename = data[2];
+        this.id = Integer.parseInt(data[0]);
+        this.filename = data[1];
     }
 
     void setAddress(String address) {
@@ -48,7 +48,7 @@ public class Query extends ConnectionMessage {
 
     @Override
     public String toString() {
-        return "Q;" + id + ";" + filename + "\n";
+        return "Q:" + id + ";" + filename + "\n";
     }
 
 }
