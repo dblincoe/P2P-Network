@@ -1,6 +1,7 @@
 import java.util.Objects;
 import java.util.Random;
 
+// Query message containing just the id, filename and sending address
 public class Query extends ConnectionMessage {
 
     private int id;

@@ -16,6 +16,7 @@ public class TransferServer extends Thread {
         transferTimer = new Timer();
     }
 
+    // Loops through and gets any new messages
     @Override
     public void run() {
         transferTimer.scheduleAtFixedRate(new TimerTask() {
@@ -33,6 +34,7 @@ public class TransferServer extends Thread {
         }, 0, 10);
     }
 
+    // Parses inbound message
     private void parseBytes(byte[] data) throws IOException {
         StringBuilder message = new StringBuilder();
 
@@ -49,6 +51,7 @@ public class TransferServer extends Thread {
                 String type = split[0];
                 String[] dataFields = split[1].split(";");
                 if (type.equals("T")) {
+                    // Setup transfer and send file
                     Transfer t = new Transfer(dataFields);
                     System.out.println("Received File Transfer request for " + t.getFilename() + " from " + getAddress());
 
@@ -61,6 +64,7 @@ public class TransferServer extends Thread {
         }
     }
 
+    // Read in a filename and send the file over the tcp connection
     private void sendFile(String filename) throws IOException {
         String filePath = "./shared/" + filename;
         FileReader fileIn = new FileReader(filePath);

@@ -19,6 +19,7 @@ public class Discovery extends Thread {
         pongs = new ArrayList<>();
     }
 
+    // Continuously looks for inbound UDP packets
     @Override
     public void run() {
         running = true;
@@ -38,10 +39,12 @@ public class Discovery extends Thread {
         running = false;
     }
 
+    // Sends ping to reciepient and waits for all the responses
     public void sendInitPing(final ConnectionManager cm, String ip, int port) throws IOException {
         pingPorts.put(ip, port);
         sendPing(new Ping(), ip, port);
 
+        // Wait 500 ms and then check pongs
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
@@ -52,6 +55,7 @@ public class Discovery extends Thread {
                         return;
                     }
 
+                    // Choose two random hosts to connect to
                     for (int i = 0; i < 2; i++) {
                         if (pongs.size() > 0) {
                             Pong randPong = pongs.get(rand.nextInt(pongs.size()));
@@ -64,6 +68,7 @@ public class Discovery extends Thread {
         }, 500);
     }
 
+    // Same as ConnectionThread except for discovery
     private void parsePacket(byte[] data) throws IOException {
         StringBuilder message = new StringBuilder();
         for (byte chunk : data) {
@@ -75,6 +80,7 @@ public class Discovery extends Thread {
                     case "PI":
                         Ping pi = new Ping(split);
 
+                        // Exclude already seen pings
                         if (pingPorts.get(pi.getIp()) == null) {
                             System.out.println("Retrieved Ping from " + pi.getIp() + ":" + pi.getPort());
 
@@ -84,6 +90,7 @@ public class Discovery extends Thread {
                         }
                         break;
                     case "PO":
+                        // Accumulates pongs
                         Pong po = new Pong(split);
                         System.out.println("Retrieved Pong from " + po.getIp() + ":" + po.getPort());
 
@@ -94,6 +101,7 @@ public class Discovery extends Thread {
         }
     }
 
+    // Pass on the ping to all other ip addresses
     private void forwardPing(Ping pi) throws IOException {
         for (Entry<String, Integer> entry : pingPorts.entrySet()) {
             String nextConnIp = entry.getKey();
@@ -104,6 +112,7 @@ public class Discovery extends Thread {
         }
     }
 
+    // Sends out a pong
     private void sendPong(Ping pi) throws IOException {
         Pong po = new Pong();
         System.out.println("Sending Pong to " + pi.getIp() + ":" + pi.getPort());
@@ -114,6 +123,7 @@ public class Discovery extends Thread {
         socket.send(packet);
     }
 
+    // Sends out a ping
     public void sendPing(Ping pi, String ip, int port) throws IOException {
         System.out.println("Sending Ping to " + ip + ":" + port);
 

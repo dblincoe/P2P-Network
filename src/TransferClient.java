@@ -21,12 +21,14 @@ public class TransferClient extends Thread {
     @Override
     public void run() {
         try {
+            // Send transfer request
             byte[] mBytes = tPacket.toString().getBytes();
             socket.getOutputStream().write(mBytes);
             System.out.println("Sent file transfer request for " + tPacket.getFilename());
 
             final FileOutputStream output = new FileOutputStream(fullFilePath, true);
 
+            // Writes inbound packets to the file specified
             try {
                 byte[] data = new byte[65536];
                 InputStream is = socket.getInputStream();

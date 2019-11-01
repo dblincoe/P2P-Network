@@ -1,6 +1,6 @@
 import java.util.Objects;
 import java.util.Random;
-
+// Heartbeat message containing just the heartbeat id
 public class Heartbeat extends ConnectionMessage {
 
     private int id;

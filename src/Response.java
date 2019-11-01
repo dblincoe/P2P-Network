@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.Scanner;
 
+// Response message containing id, ip, port, and filename
 public class Response extends ConnectionMessage {
 
     private int id;

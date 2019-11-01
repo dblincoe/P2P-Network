@@ -29,6 +29,7 @@ public class ConnectionManager extends Thread {
     @Override
     public void run() {
         try {
+            // Accept any new connections
             while (running) {
                 ConnectionThread ct = new ConnectionThread(this.connectionSocket.accept(), syncMessages, syncConnections);
                 addConnection(ct, "Accepting connection from: ");
@@ -36,10 +37,12 @@ public class ConnectionManager extends Thread {
         } catch (IOException ignored) {}
     }
 
+    // Starts the discovery protocol
     void runDiscoveryProtocol(String ip, int port) throws IOException {
         discoverySocket.sendInitPing(this, ip, port);
     }
 
+    // Starts a connection thread for a given ip and port
     void createNeighbor(String hostIp, int port) throws IOException {
         InetAddress ip = InetAddress.getByName(hostIp);
 
@@ -47,6 +50,7 @@ public class ConnectionManager extends Thread {
         addConnection(ct, "Attempting to connect to: ");
     }
 
+    // Logic to adding new or updated connections
     private void addConnection(ConnectionThread ct, String connStr) throws IOException {
         ConnectionThread prevConn = syncConnections.get(ct.getAddress());
 
@@ -56,6 +60,7 @@ public class ConnectionManager extends Thread {
             prevConn.close();
         }
 
+        // If we couldn't connect, log the failure
         if (!ct.isConnected()) {
             System.out.println("Failed to connect to " + ct.getAddress());
             ct.close();
@@ -69,6 +74,7 @@ public class ConnectionManager extends Thread {
         }
     }
 
+    // Loop through connections and close them all
     void closeNeighborConnections() throws IOException {
         Collection<ConnectionThread> values = syncConnections.values();
 
@@ -83,6 +89,7 @@ public class ConnectionManager extends Thread {
         syncConnections.clear();
     }
 
+    // Shuts down sockets and stops manager
     void exit() throws IOException {
         closeNeighborConnections();
         discoverySocket.close();
@@ -90,6 +97,7 @@ public class ConnectionManager extends Thread {
         running = false;
     }
     
+    // queries the network for a file
     void get(String filename) throws IOException {
         Query q = new Query(filename);
         syncMessages.put(q.getId(), q);

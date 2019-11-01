@@ -14,6 +14,7 @@ public class TransferManager extends Thread {
         transfers = new HashMap<>();
     }
 
+    // Accepts new connections for transfer
     @Override
     public void run() {
         running = true;
@@ -28,7 +29,7 @@ public class TransferManager extends Thread {
         }
     }
 
-
+    // Close out of all connections
     private void closeTransferConnections() throws IOException {
         for (TransferServer ts : transfers.values()) {
             ts.close();
@@ -36,6 +37,7 @@ public class TransferManager extends Thread {
         transfers.clear();
     }
 
+    // Stops socket
     void exit() throws IOException {
         closeTransferConnections();
         transferSocket.close();

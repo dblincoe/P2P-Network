@@ -15,26 +15,27 @@ public class p2p
             }
         }
 
+        // Reads in port numbers
         Scanner portIn = new Scanner(new File("./config_peer.txt"));
         int connectionPort = portIn.nextInt();
         int transferPort = portIn.nextInt();
         int discoveryPort = portIn.nextInt();
 
+        // Determines local ip
         Socket s = new Socket("www.google.com", 80);
         System.out.println("IP Address " + s.getLocalAddress().getHostAddress());
         s.close();
 
+        // Setup and start connection and transfer manager
         ConnectionManager connection = new ConnectionManager(connectionPort, discoveryPort);
         TransferManager transfer = new TransferManager(transferPort);
         System.out.println("Discovery Port " + discoveryPort);
-
         System.out.println("Transfer, Connection, and Discovery Sockets Opened");
-
         connection.start();
         transfer.start();
         
+        // Loop over scanner input to read user commands
         Scanner commandsIn = new Scanner(System.in);
-
         String command = commandsIn.nextLine().toLowerCase();
         System.out.println();
 
